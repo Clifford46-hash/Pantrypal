@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="description" content="Track your groceries, get warned before food expires, and find recipes from what you have." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <title>PantryPal — Food Inventory & Recipes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-header__brand">
+        <span class="app-header__logo">🥗</span>
+        <h1 class="app-header__title">PantryPal</h1>
+      </div>
+      <div class="app-header__actions">
+        <button id="scanBtn" class="iconbtn" type="button" title="Scan barcode" aria-label="Scan barcode">📷</button>
+        <button id="addBtn" class="btn btn--primary btn--sm" type="button">+ Add</button>
+      </div>
+    </header>
+
+    <!-- Expiry alert bar (global, shows on any tab) -->
+    <div id="alertBar" class="alertbar" hidden>
+      <span class="alertbar__icon">⚠️</span>
+      <div id="alertText" class="alertbar__text"></div>
+      <button id="alertNotify" class="alertbar__btn" type="button" hidden>🔔 Remind me</button>
+      <button id="alertView" class="alertbar__btn alertbar__btn--solid" type="button">View</button>
+      <button id="alertClose" class="alertbar__x" type="button" aria-label="Dismiss">✕</button>
+    </div>
+
+    <!-- Views -->
+    <main id="main" class="main">
+
+      <!-- INVENTORY -->
+      <section id="view-inventory" class="view" data-view="inventory">
+        <div class="view__head">
+          <h2 class="view__title">Inventory</h2>
+          <div class="search">
+            <input id="searchInput" class="search__input" type="search" placeholder="Search items…" />
+          </div>
+        </div>
+        <div id="categoryFilter" class="chips"></div>
+        <div id="inventoryList" class="list"></div>
+        <div id="inventoryEmpty" class="empty" hidden>
+          <div class="empty__icon">🛒</div>
+          <p class="empty__title">Your pantry is empty</p>
+          <p class="empty__text">Tap <strong>+ Add</strong> to log your first grocery item.</p>
+        </div>
+      </section>
+
+      <!-- EXPIRING -->
+      <section id="view-expiring" class="view" data-view="expiring" hidden>
+        <div class="view__head">
+          <h2 class="view__title">Expiring Soon</h2>
+        </div>
+        <div id="expStats" class="stats"></div>
+        <div id="expiringList" class="list"></div>
+        <div id="expiringEmpty" class="empty" hidden>
+          <div class="empty__icon">✅</div>
+          <p class="empty__title">Nothing expiring soon</p>
+          <p class="empty__text">Items expiring within 7 days will show up here.</p>
+        </div>
+      </section>
+
+      <!-- RECIPES -->
+      <section id="view-recipes" class="view" data-view="recipes" hidden>
+        <div class="view__head">
+          <h2 class="view__title">Recipe Ideas</h2>
+          <p class="view__sub">Matched against what's in your inventory.</p>
+        </div>
+        <button id="aiBtn" class="btn btn--ai" type="button">✨ Generate AI Recipe</button>
+        <div id="aiResult"></div>
+        <div id="recipeList" class="recipes"></div>
+        <div id="recipesEmpty" class="empty" hidden>
+          <div class="empty__icon">👩‍🍳</div>
+          <p class="empty__title">Add a few items first</p>
+          <p class="empty__text">Recipe suggestions appear once you have ingredients logged.</p>
+        </div>
+      </section>
+
+      <!-- SHOPPING -->
+      <section id="view-shopping" class="view" data-view="shopping" hidden>
+        <div class="view__head">
+          <h2 class="view__title">Shopping List</h2>
+        </div>
+        <form id="shopAddForm" class="shopadd">
+          <input id="shopInput" class="search__input" type="text" placeholder="Add an item to buy…" autocomplete="off" />
+          <button class="btn btn--primary btn--sm" type="submit">Add</button>
+        </form>
+        <div id="shoppingList" class="list"></div>
+        <div id="shoppingActions" class="shopactions" hidden>
+          <button id="shopMoveBtn" class="btn btn--ghost btn--sm" type="button">Move checked → Inventory</button>
+          <button id="shopClearBtn" class="btn btn--danger btn--sm" type="button">Clear checked</button>
+        </div>
+        <div id="shoppingEmpty" class="empty" hidden>
+          <div class="empty__icon">📝</div>
+          <p class="empty__title">Your shopping list is empty</p>
+          <p class="empty__text">Add items here, or send missing recipe ingredients from the Recipes tab.</p>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <section id="view-stats" class="view" data-view="stats" hidden>
+        <div class="view__head">
+          <h2 class="view__title">Your Impact</h2>
+        </div>
+        <div id="statsBody"></div>
+        <div id="statsEmpty" class="empty" hidden>
+          <div class="empty__icon">📊</div>
+          <p class="empty__title">No history yet</p>
+          <p class="empty__text">When you finish or toss an item, tap it and choose <strong>Used it</strong> or <strong>Threw out</strong>. Your savings show up here.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom nav -->
+    <nav class="tabbar">
+      <button class="tab is-active" data-tab="inventory" type="button">
+        <span class="tab__icon">📦</span><span class="tab__label">Inventory</span>
+      </button>
+      <button class="tab" data-tab="expiring" type="button">
+        <span class="tab__icon">⏰</span><span class="tab__label">Expiring</span>
+        <span id="expBadge" class="tab__badge" hidden>0</span>
+      </button>
+      <button class="tab" data-tab="recipes" type="button">
+        <span class="tab__icon">🍳</span><span class="tab__label">Recipes</span>
+      </button>
+      <button class="tab" data-tab="shopping" type="button">
+        <span class="tab__icon">🛒</span><span class="tab__label">Shopping</span>
+        <span id="shopBadge" class="tab__badge tab__badge--neutral" hidden>0</span>
+      </button>
+      <button class="tab" data-tab="stats" type="button">
+        <span class="tab__icon">📊</span><span class="tab__label">Stats</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Add/Edit item modal -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__handle"></div>
+      <h2 id="modalTitle" class="modal__title">Add Item</h2>
+      <form id="itemForm" class="form">
+        <input type="hidden" id="itemId" />
+        <label class="field">
+          <span class="field__label">Item name</span>
+          <input id="itemName" class="field__input" type="text" placeholder="e.g. Chicken breast" required autocomplete="off" />
+          <div id="nameSuggest" class="suggest" hidden></div>
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Quantity</span>
+            <input id="itemQty" class="field__input" type="text" placeholder="1" inputmode="decimal" />
+          </label>
+          <label class="field">
+            <span class="field__label">Unit</span>
+            <select id="itemUnit" class="field__input">
+              <option value="">—</option>
+              <option>pcs</option><option>lb</option><option>oz</option>
+              <option>g</option><option>kg</option><option>L</option>
+              <option>ml</option><option>cup</option><option>can</option>
+              <option>box</option><option>bag</option><option>bottle</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Category</span>
+            <select id="itemCategory" class="field__input"></select>
+          </label>
+          <label class="field">
+            <span class="field__label">Location</span>
+            <select id="itemLocation" class="field__input"></select>
+          </label>
+        </div>
+        <label class="field">
+          <span class="field__label">Expiration date</span>
+          <input id="itemExpiry" class="field__input" type="date" />
+          <div class="quickdates">
+            <button type="button" class="quickdate" data-days="3">+3d</button>
+            <button type="button" class="quickdate" data-days="7">+1wk</button>
+            <button type="button" class="quickdate" data-days="14">+2wk</button>
+            <button type="button" class="quickdate" data-days="30">+1mo</button>
+          </div>
+        </label>
+        <div id="outcomeActions" class="outcome" hidden>
+          <button type="button" id="usedBtn" class="btn btn--used">✓ Used it</button>
+          <button type="button" id="wastedBtn" class="btn btn--wasted">🗑 Threw out</button>
+        </div>
+        <div class="form__actions">
+          <button type="button" id="deleteBtn" class="btn btn--ghost btn--sm" hidden>Delete</button>
+          <button type="button" class="btn btn--ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn--primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Barcode scanner modal -->
+  <div id="scanModal" class="modal" hidden>
+    <div class="modal__backdrop" data-scanclose></div>
+    <div class="modal__sheet" role="dialog" aria-modal="true" aria-label="Scan barcode">
+      <div class="modal__handle"></div>
+      <h2 class="modal__title">Scan a Barcode</h2>
+      <div id="reader" class="reader"></div>
+      <p id="scanStatus" class="scanstatus">Point your camera at a product barcode…</p>
+      <div class="form__actions">
+        <button type="button" class="btn btn--ghost" data-scanclose>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI settings modal (API key) -->
+  <div id="keyModal" class="modal" hidden>
+    <div class="modal__backdrop" data-keyclose></div>
+    <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
+      <div class="modal__handle"></div>
+      <h2 id="keyTitle" class="modal__title">✨ AI Recipes Setup</h2>
+      <p class="keyintro">PantryPal can use Claude to invent recipes from your ingredients. Paste your Anthropic API key — it's stored only on this device and sent directly to Anthropic.</p>
+      <form id="keyForm" class="form">
+        <label class="field">
+          <span class="field__label">Anthropic API key</span>
+          <input id="keyInput" class="field__input" type="password" placeholder="sk-ant-…" autocomplete="off" />
+        </label>
+        <p class="keyhint">Get a key at <span class="keylink">console.anthropic.com</span>. For a shipped product you'd route this through your own server instead.</p>
+        <div class="form__actions">
+          <button type="button" class="btn btn--ghost" data-keyclose>Cancel</button>
+          <button type="submit" class="btn btn--primary">Save key</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/recipes.js"></script>
+  <script src="js/shopping.js"></script>
+  <script src="js/scanner.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/notify.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW registration failed", e));
+      });
+    }
+  </script>
+</body>
+</html>

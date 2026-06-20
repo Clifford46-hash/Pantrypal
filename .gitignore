@@ -1,0 +1,14 @@
+# Dependencies (none needed, but just in case)
+node_modules/
+
+# Secrets — NEVER commit your API key. It goes in Netlify's env vars instead.
+.env
+.env.*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+
+# Netlify local state
+.netlify/

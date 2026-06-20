@@ -1,0 +1,10 @@
+# Netlify configuration for PantryPal
+# The whole app is static; the only backend is the serverless function below.
+
+[build]
+  # Serve the repo root as the website (index.html lives here).
+  publish = "."
+  # Serverless functions live here.
+  functions = "netlify/functions"
+
+# No build step needed — it's a plain static PWA with one dependency-free function.
