@@ -47,20 +47,35 @@ PantryPal/
 │   ├── recipes.js    # recipe DB + ingredient matching engine
 │   ├── shopping.js   # shopping-list persistence
 │   ├── scanner.js    # camera barcode scan + Open Food Facts lookup
-│   ├── ai.js         # Claude API recipe generation (browser-direct)
+│   ├── ai.js         # AI recipes — calls backend, falls back to user key
 │   ├── stats.js      # usage/waste history + money-saved aggregation
 │   ├── notify.js     # expiry alerts + opt-in browser notifications
 │   └── app.js        # UI controller
+├── netlify/
+│   └── functions/
+│       └── recipe.js # serverless Claude proxy (keeps the API key server-side)
+├── netlify.toml      # Netlify hosting + functions config
 ├── manifest.json     # PWA manifest (installable)
 ├── sw.js             # service worker (offline cache)
 └── icons/
 ```
 
+## Deploying to production
+
+See **[DEPLOY.md](DEPLOY.md)** — push to GitHub, connect Netlify, set your
+`ANTHROPIC_API_KEY` env var. Once deployed, AI recipes work for any user with no
+key (the key stays on the server in the `recipe.js` function). Running locally or
+on a plain static host with no backend, the app falls back to asking each user for
+their own key.
+
 ## Roadmap (toward a sellable product)
 
-- **Backend proxy for AI** so users don't need their own key (and you control cost/limits).
-- **Cloud sync & accounts** so inventory follows you across devices.
-- **Push notifications** for items about to expire.
+- ✅ **Backend proxy for AI** — done (`netlify/functions/recipe.js`). Next: add
+  rate-limiting / per-user quotas before public launch.
+- **Cloud sync & accounts** so inventory follows you across devices (also the
+  natural paid-tier boundary).
+- **Background push notifications** for expiry (needs Web Push: VAPID keys +
+  subscription storage + a scheduled sender).
 - **App Store / Play Store** packaging via Capacitor.
 - Monetization: free tier + premium (sync, unlimited AI recipes, notifications), or one-time unlock.
 
